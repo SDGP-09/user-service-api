@@ -92,6 +92,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
+		<finalName>user-management-api</finalName>
 	</build>
 
 </project>

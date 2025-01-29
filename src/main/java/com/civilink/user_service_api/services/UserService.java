@@ -126,7 +126,7 @@ public class UserService {
         requestBody.add("client_secret",clientSecret);
         requestBody.add("password",password);
 
-        String keyCloakApiUrl = "http://localhost:8080/realms/civilink/protocol/openid-connect/token";
+        String keyCloakApiUrl = "http://civilink-keycloak:8080/realms/civilink/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
 
