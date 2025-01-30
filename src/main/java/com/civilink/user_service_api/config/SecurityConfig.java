@@ -21,8 +21,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http.csrf(AbstractHttpConfigurer::disable);
         http.authorizeHttpRequests(authorize->{
-           authorize.requestMatchers(HttpMethod.POST,"api/v1/users/create").permitAll()
-                   .requestMatchers(HttpMethod.POST,"api/v1/users/login").permitAll()
+           authorize.requestMatchers(HttpMethod.POST,"/api/v1/users/create").permitAll()
+                   .requestMatchers(HttpMethod.POST,"/api/v1/users/login").permitAll()
                    .anyRequest()
                    .authenticated();
         });
@@ -40,4 +40,6 @@ public class SecurityConfig {
         defaultMethodSecurityExpressionHandler.setDefaultRolePrefix("");
         return defaultMethodSecurityExpressionHandler;
     }
+
+
 }

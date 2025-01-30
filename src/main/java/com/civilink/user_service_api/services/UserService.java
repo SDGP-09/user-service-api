@@ -12,9 +12,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -24,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserService {
@@ -40,9 +39,15 @@ public class UserService {
     @Value("${keycloak.client-secret}")
     private String clientSecret;
 
+    @Value("${keycloak.api-url}")
+    private String apiUrl;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
     public void createUser(
             String userName, String password, String firstName, String lastName, String email, String groupName, String userRoles
     ){
+
 
         User user = User.builder().username(userName)
                 .password(password)
@@ -126,7 +131,7 @@ public class UserService {
         requestBody.add("client_secret",clientSecret);
         requestBody.add("password",password);
 
-        String keyCloakApiUrl = "http://civilink-keycloak:8080/realms/civilink/protocol/openid-connect/token";
+        String keyCloakApiUrl = apiUrl;
 
         HttpHeaders headers = new HttpHeaders();
 
@@ -137,6 +142,20 @@ public class UserService {
         ResponseEntity<Object> response = restTemplate.postForEntity(keyCloakApiUrl,requestBody, Object.class);
 
         return response.getBody();
+    }
+
+    public String getAccessToken() {
+        String tokenUrl = "http://localhost:8080/realms/civilink/protocol/openid-connect/token";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        String body = "grant_type=client_credentials&client_id=" + clientId + "&client_secret=" + clientSecret;
+
+        HttpEntity<String> request = new HttpEntity<>(body, headers);
+        ResponseEntity<Map> response = restTemplate.exchange(tokenUrl, HttpMethod.POST, request, Map.class);
+
+        return (String) response.getBody().get("access_token");
     }
 
 }
