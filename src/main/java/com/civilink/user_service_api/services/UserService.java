@@ -1,5 +1,7 @@
 package com.civilink.user_service_api.services;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.civilink.user_service_api.dto.User;
 
 import jakarta.ws.rs.core.Response;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -45,8 +48,18 @@ public class UserService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public void createUser(
-            String userName, String password, String firstName, String lastName, String email, String groupName, String userRoles
+            String reqToken, String userName, String password, String firstName, String lastName, String email, String groupName, String userRoles
     ){
+
+
+        Keycloak keycloak = getKeyCloakInstance(reqToken);
+
+        String requesterUserId = getRequesterUserId(reqToken);
+        List<String> requesterGroups = getUserGroups(keycloak, requesterUserId);
+
+        if (!requesterGroups.contains(groupName)) {
+            throw new SecurityException("Requester does not belong to the specified group: " + groupName);
+        }
 
 
         User user = User.builder().username(userName)
@@ -58,12 +71,12 @@ public class UserService {
 
         UserRepresentation userRep = mapUser(user);
 
-        Keycloak keycloak = getKeyCloakInstance();
+
 
         Response response = keycloak.realm(realm).users().create(userRep);
 
         if (response.getStatus() == Response.Status.CREATED.getStatusCode()){
-            RoleRepresentation userRole = keycloak.realm(realm).roles().get("user").toRepresentation();
+           // RoleRepresentation userRole = keycloak.realm(realm).roles().get("user").toRepresentation();
 
             String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
 
@@ -95,12 +108,11 @@ public class UserService {
 
     }
 
-    private Keycloak getKeyCloakInstance(){
+    private Keycloak getKeyCloakInstance(String token){
         return KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
                 .realm(realm)
-                .username("host")
-                .password("1234")
+                .authorization(token)
                 .clientSecret(clientSecret)
                 .clientId(clientId)
                 .build();
@@ -156,6 +168,16 @@ public class UserService {
         ResponseEntity<Map> response = restTemplate.exchange(tokenUrl, HttpMethod.POST, request, Map.class);
 
         return (String) response.getBody().get("access_token");
+    }
+
+    public String getRequesterUserId(String requestToken){
+        DecodedJWT decodedJWT = JWT.decode(requestToken);
+        return decodedJWT.getClaim("sub").asString();
+    }
+
+    private List<String> getUserGroups(Keycloak keycloak, String userId) {
+        List<GroupRepresentation> groups = keycloak.realm(realm).users().get(userId).groups();
+        return groups.stream().map(GroupRepresentation::getName).collect(Collectors.toList());
     }
 
 }
