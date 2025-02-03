@@ -23,6 +23,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorize->{
            authorize.requestMatchers(HttpMethod.POST,"/api/v1/users/create").permitAll()
                    .requestMatchers(HttpMethod.POST,"/api/v1/users/login").permitAll()
+                   .requestMatchers(HttpMethod.POST,"/api/v1/users/verify").permitAll()
                    .anyRequest()
                    .authenticated();
         });
