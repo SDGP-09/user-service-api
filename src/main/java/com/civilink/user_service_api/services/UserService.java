@@ -1,9 +1,13 @@
 package com.civilink.user_service_api.services;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.JWTVerifier;
 import com.civilink.user_service_api.dto.User;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -21,10 +25,12 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.security.KeyFactory;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -135,6 +141,9 @@ public class UserService {
     }
 
     public Object login(String username, String password){
+
+        System.out.println(username +","+ password);
+
         MultiValueMap<String,String> requestBody = new LinkedMultiValueMap<>();
 
         requestBody.add("client_id",clientId);
@@ -178,6 +187,47 @@ public class UserService {
     private List<String> getUserGroups(Keycloak keycloak, String userId) {
         List<GroupRepresentation> groups = keycloak.realm(realm).users().get(userId).groups();
         return groups.stream().map(GroupRepresentation::getName).collect(Collectors.toList());
+    }
+
+
+    private RSAPublicKey getPublicKey() throws Exception {
+        String jwksUrl = serverUrl+"/realms/civilink/protocol/openid-connect/certs";
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<String> response = restTemplate.getForEntity(jwksUrl, String.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode root = objectMapper.readTree(response.getBody());
+        String certificateString = root.get("keys").get(0).get("x5c").get(0).asText();
+
+        byte[] decoded = Base64.getDecoder().decode(certificateString);
+
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate certificate = (X509Certificate) cf.generateCertificate(new java.io.ByteArrayInputStream(decoded));
+
+        return (RSAPublicKey) certificate.getPublicKey();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            DecodedJWT decodedJWT = JWT.decode(token);
+
+            // Verify the token using Keycloak's public key
+            Algorithm algorithm = Algorithm.RSA256(getPublicKey(), null);
+            JWTVerifier verifier = JWT.require(algorithm)
+                    .withIssuer(serverUrl+"/realms/civilink")
+                    .build();
+            verifier.verify(token);
+
+            // Check expiration
+            if (decodedJWT.getExpiresAt().before(new Date())) {
+                throw new SecurityException("Token has expired");
+            }
+
+            return true;
+        } catch (Exception e) {
+            System.err.println("Invalid Token: " + e.getMessage());
+            return false;
+        }
     }
 
 }

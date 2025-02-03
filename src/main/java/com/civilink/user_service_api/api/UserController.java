@@ -55,6 +55,18 @@ public class UserController {
     public Object login(
             @RequestParam String username, @RequestParam String password
     ){
+        System.out.println(username +","+ password);
         return userService.login(username,password);
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<Boolean> verifyToken(
+            @RequestParam String authToken
+    ){
+        System.out.println(authToken);
+        String token = authToken.replace("Bearer ", "");
+
+        Boolean isValid = userService.validateToken(token);
+        return ResponseEntity.ok(isValid);
     }
 }
