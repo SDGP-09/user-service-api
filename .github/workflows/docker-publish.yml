@@ -21,9 +21,9 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t lasithdev/civilink-eureka-server:${{github.sha}} .
-          docker tag lasithdev/civilink-eureka-server:${{github.sha}} lasithdev/eureka-gateway-server:latest
+          docker build -t lasithdev/civilink-user-management-server:${{github.sha}} .
+          docker tag lasithdev/civilink-user-management-server:${{github.sha}} lasithdev/civilink-user-management-server:latest
 
       - name: Push Docker Image to Docker hub
         run: |
-          docker push lasithdev/civilink-eureka-server:latest
+          docker push lasithdev/civilink-user-management-server:latest
