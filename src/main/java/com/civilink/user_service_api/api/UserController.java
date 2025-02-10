@@ -5,12 +5,16 @@ import com.civilink.user_service_api.dto.User;
 import com.civilink.user_service_api.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -68,5 +72,19 @@ public class UserController {
 
         Boolean isValid = userService.validateToken(token);
         return ResponseEntity.ok(isValid);
+    }
+
+    @GetMapping("/user-group")
+    public String getUserGroup(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        List<String> groups = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(role->role.startsWith("ROLE_"))
+                .map(role->role.substring(5))
+                .collect(Collectors.toList());
+
+
+        return groups.isEmpty()? "No groups found" : String.join(", ", groups);
     }
 }
