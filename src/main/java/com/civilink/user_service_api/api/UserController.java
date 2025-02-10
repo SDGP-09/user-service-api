@@ -3,6 +3,8 @@ package com.civilink.user_service_api.api;
 
 import com.civilink.user_service_api.dto.User;
 import com.civilink.user_service_api.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -86,5 +88,14 @@ public class UserController {
 
 
         return groups.isEmpty()? "No groups found" : String.join(", ", groups);
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+
+        SecurityContextHolder.clearContext();
+        request.getSession().invalidate();
+
+        return "User logged out successfully!";
     }
 }
