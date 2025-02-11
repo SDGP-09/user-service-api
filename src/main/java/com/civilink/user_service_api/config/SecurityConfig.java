@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -32,6 +34,12 @@ public class SecurityConfig {
 
         http.sessionManagement(t->t.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
+        http.logout(logout -> logout
+                .logoutUrl("/logout") // Local logout endpoint
+                .addLogoutHandler(keycloakLogoutHandler()) // Custom Keycloak logout handler
+                .logoutSuccessHandler(keycloakLogoutSuccessHandler()) // Redirect to Keycloak after logout
+        );
+
         return http.build();
     }
 
@@ -41,6 +49,23 @@ public class SecurityConfig {
         defaultMethodSecurityExpressionHandler.setDefaultRolePrefix("");
         return defaultMethodSecurityExpressionHandler;
     }
+
+    @Bean
+    public LogoutHandler keycloakLogoutHandler() {
+        return (request, response, authentication) -> {
+            // You can add logic to revoke tokens if needed.
+        };
+    }
+
+    @Bean
+    public LogoutSuccessHandler keycloakLogoutSuccessHandler() {
+        return (request, response, authentication) -> {
+            String keycloakLogoutUrl = "http://localhost:8080/realms/civilink/protocol/openid-connect/logout";
+            response.sendRedirect(keycloakLogoutUrl);
+        };
+    }
+
+
 
 
 }
