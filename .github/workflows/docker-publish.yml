@@ -31,9 +31,11 @@ jobs:
         run: |
           docker push lasithdev/civilink-user-management-server:latest
 
-      - name: Install GKE Auth Plugin
+      - name: Configure GKE Auth Plugin
         run: |
-          sudo apt-get update && sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
+          gcloud components update
+          export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+      
       
 
       - name: Configure kubectl
