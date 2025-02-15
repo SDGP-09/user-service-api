@@ -49,5 +49,5 @@ jobs:
           gcloud container clusters get-credentials civilink-cluster --zone us-central1-c --project ${{ secrets.GCP_PROJECT }}
       - name: Update GKE Deployment
         run: |
-          kubectl set image deployment/civilink-user-management civilink-user-management=lasithdev/civilink-user-management-server:latest:latest -n development
+          kubectl set image deployment/civilink-user-management civilink-user-management=lasithdev/civilink-user-management-server:latest -n development
           kubectl rollout restart deployment civilink-user-management -n development
