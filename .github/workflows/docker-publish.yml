@@ -30,3 +30,17 @@ jobs:
       - name: Push Docker Image to Docker hub
         run: |
           docker push lasithdev/civilink-user-management-server:latest
+
+      - name: Install GKE Auth Plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin
+          gcloud components update
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials civilink-cluster --zone us-central1-c --project ${{ secrets.GCP_PROJECT }}
+
+      - name: Update GKE Deployment
+        run: |
+          kubectl set image deployment/civilink-user-management civilink-user-management=lasithdev/civilink-user-management-server:latest:latest -n development
+          kubectl rollout restart deployment civilink-user-management -n development
