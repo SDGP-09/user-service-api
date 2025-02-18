@@ -9,6 +9,6 @@ RUN mvn package -DskipTests
 FROM openjdk:17-alpine
 WORKDIR /app
 COPY --from=build /app/target/user-management-api.jar .
-COPY src/main/resources/keystore.p12 src/main/resources/keystore.p12
+
 EXPOSE 9090
 CMD ["java", "-jar", "user-management-api.jar"]
